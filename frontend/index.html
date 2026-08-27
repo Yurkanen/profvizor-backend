@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ПрофВизор</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --surface-0:#EDEEEC;
+    --surface-1:#FFFFFF;
+    --surface-2:#E2E4E1;
+    --surface-3:#D6D9D5;
+    --ink-900:#1B2023;
+    --ink-600:#52585C;
+    --ink-400:#7B8286;
+    --line:#CBD0CC;
+    --line-strong:#B7BCB8;
+    --accent:#D9622B;
+    --accent-ink:#FFF7EF;
+    --steel:#4C5B66;
+    --steel-ink:#EFF2F3;
+    --error:#B23B2E;
+    --error-ink:#FFF3F1;
+    --shadow: 0 1px 2px rgba(27,32,35,0.06), 0 8px 24px -12px rgba(27,32,35,0.18);
+    --radius-s: 3px;
+    --radius-m: 6px;
+    --font-display: 'Big Shoulders', 'Arial Narrow', sans-serif;
+    --font-body: 'IBM Plex Sans', system-ui, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --surface-0:#14181A; --surface-1:#1B2023; --surface-2:#232A2D; --surface-3:#2C3437;
+      --ink-900:#ECEEEA; --ink-600:#AAB1AC; --ink-400:#7D8480;
+      --line:#333B3E; --line-strong:#3F4A4D;
+      --accent:#F07C3D; --accent-ink:#1B120A;
+      --steel:#7C93A0; --steel-ink:#12181C;
+      --error:#E2695A; --error-ink:#1F0E0B;
+      --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 8px 28px -12px rgba(0,0,0,0.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --surface-0:#14181A; --surface-1:#1B2023; --surface-2:#232A2D; --surface-3:#2C3437;
+    --ink-900:#ECEEEA; --ink-600:#AAB1AC; --ink-400:#7D8480;
+    --line:#333B3E; --line-strong:#3F4A4D;
+    --accent:#F07C3D; --accent-ink:#1B120A;
+    --steel:#7C93A0; --steel-ink:#12181C;
+    --error:#E2695A; --error-ink:#1F0E0B;
+    --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 8px 28px -12px rgba(0,0,0,0.5);
+  }
+
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--surface-0);color:var(--ink-900);font-family:var(--font-body);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  h1,h2,h3{font-family:var(--font-display);text-transform:uppercase;text-wrap:balance;margin:0;}
+  ::selection{background:var(--accent);color:var(--accent-ink);}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 24px 72px;}
+
+  .masthead{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;padding-bottom:22px;margin-bottom:26px;border-bottom:2px solid var(--ink-900);}
+  .kicker{font-family:var(--font-mono);font-size:11.5px;letter-spacing:.14em;color:var(--accent);text-transform:uppercase;display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .kicker::before{content:"";width:7px;height:7px;background:var(--accent);border-radius:1px;transform:rotate(45deg);flex:none;}
+  .masthead h1{font-size:clamp(34px,5vw,52px);font-weight:800;letter-spacing:.01em;line-height:.92;}
+  .masthead p{max-width:46ch;color:var(--ink-600);margin:10px 0 0;font-size:14.5px;}
+  .masthead-meta{font-family:var(--font-mono);font-size:12px;color:var(--ink-400);text-align:right;line-height:1.7;white-space:nowrap;}
+
+  .workbench{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(300px,0.95fr);gap:20px;align-items:start;}
+  @media (max-width:860px){.workbench{grid-template-columns:1fr;}}
+
+  .panel{background:var(--surface-1);border:1px solid var(--line);border-radius:var(--radius-m);box-shadow:var(--shadow);}
+  .panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
+  .panel-head h2{font-size:19px;letter-spacing:.02em;}
+  .panel-body{padding:16px;}
+
+  .btn{font-family:var(--font-body);font-size:13px;font-weight:600;color:var(--ink-900);background:var(--surface-2);border:1px solid var(--line-strong);border-radius:var(--radius-s);padding:8px 13px;cursor:pointer;transition:background .12s ease, border-color .12s ease;}
+  .btn:hover{background:var(--surface-3);}
+  .btn.ghost{background:transparent;}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);}
+  .btn.primary:hover{filter:brightness(1.05);}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap;}
+  input[type="file"]{display:none;}
+
+  .stage{position:relative;margin:16px;border-radius:var(--radius-s);background:var(--steel);padding:14px;}
+  .stage .rivet{position:absolute;width:7px;height:7px;border-radius:50%;background:radial-gradient(circle at 35% 30%, rgba(255,255,255,.55) 0%, rgba(0,0,0,.4) 70%);box-shadow:inset 0 0 0 1px rgba(0,0,0,.35);}
+  .rivet.tl{top:7px;left:7px;} .rivet.tr{top:7px;right:7px;}
+  .rivet.bl{bottom:7px;left:7px;} .rivet.br{bottom:7px;right:7px;}
+
+  .canvas-box{position:relative;width:100%;aspect-ratio:3/2;border-radius:2px;overflow:hidden;background:#1e2528;}
+  #stageCanvas{display:block;width:100%;height:100%;}
+  #resultImg{display:none;width:100%;height:100%;object-fit:cover;}
+  .canvas-empty-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+  .canvas-empty-hint span{font-family:var(--font-mono);font-size:12px;color:var(--steel-ink);background:rgba(255,255,255,.85);padding:5px 10px;border-radius:3px;opacity:.9;}
+
+  .busy-overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;background:rgba(20,24,26,.55);color:#fff;font-family:var(--font-mono);font-size:12.5px;text-align:center;padding:16px;}
+  .spinner{width:26px;height:26px;border-radius:50%;border:3px solid rgba(255,255,255,.35);border-top-color:#fff;animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .stage-caption{font-family:var(--font-mono);font-size:12.5px;color:var(--ink-600);padding:0 16px 16px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+  .stage-caption strong{color:var(--ink-900);font-weight:500;}
+
+  .status-row{margin:0 16px 16px;padding:10px 12px;border-radius:var(--radius-s);font-size:13px;display:none;}
+  .status-row.info{display:block;background:var(--surface-2);color:var(--ink-600);}
+  .status-row.error{display:block;background:var(--error-ink);color:var(--error);border:1px solid var(--error);}
+  .status-row.success{display:block;background:var(--surface-2);color:var(--ink-900);}
+
+  .field-group{margin-bottom:20px;}
+  .field-group:last-child{margin-bottom:0;}
+  .field-label{font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-400);display:block;margin-bottom:9px;}
+
+  .segmented{display:flex;flex-direction:column;gap:6px;}
+  .seg-btn{display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;padding:9px 12px;background:var(--surface-2);border:1px solid var(--line);border-left:3px solid var(--line-strong);border-radius:var(--radius-s);color:var(--ink-900);font-family:var(--font-body);font-size:13.5px;font-weight:500;cursor:pointer;transition:border-color .12s ease, background .12s ease;}
+  .seg-btn:hover{background:var(--surface-3);}
+  .seg-btn[aria-pressed="true"]{border-left-color:var(--accent);background:var(--surface-1);box-shadow:inset 0 0 0 1px var(--line-strong);}
+
+  .swatches{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  .swatch{border:1px solid var(--line);border-radius:var(--radius-s);background:var(--surface-1);padding:6px 6px 7px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:box-shadow .12s ease;}
+  .swatch .chip{width:100%;aspect-ratio:1/1;border-radius:2px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12), inset 0 -6px 10px rgba(0,0,0,.15), inset 0 6px 8px rgba(255,255,255,.12);}
+  .swatch .ral-code{font-family:var(--font-mono);font-size:10px;color:var(--ink-600);}
+  .swatch[aria-pressed="true"]{box-shadow:0 0 0 2px var(--accent);}
+  .swatch:hover{box-shadow:0 0 0 1px var(--line-strong);}
+  .swatch[aria-pressed="true"]:hover{box-shadow:0 0 0 2px var(--accent);}
+  .ral-name{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-600);margin-top:8px;min-height:1.4em;}
+
+  .range-row{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+  .range-row:last-child{margin-bottom:0;}
+  .range-row label{font-size:13px;color:var(--ink-600);flex:none;width:112px;}
+  .range-row input[type="range"]{flex:1;accent-color:var(--accent);}
+  .range-row output{font-family:var(--font-mono);font-size:12.5px;font-variant-numeric:tabular-nums;color:var(--ink-900);width:52px;text-align:right;flex:none;}
+
+  .smeta{margin-top:20px;}
+  .smeta-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  .smeta-head p{margin:4px 0 0;color:var(--ink-600);font-size:13px;max-width:56ch;}
+  .smeta-grid{margin-top:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius-s);overflow:hidden;}
+  .smeta-cell{background:var(--surface-1);padding:13px 14px;}
+  .smeta-cell .label{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-400);display:block;margin-bottom:6px;}
+  .smeta-cell .value{font-family:var(--font-mono);font-size:20px;font-variant-numeric:tabular-nums;color:var(--ink-900);}
+  .smeta-cell .value small{font-size:12px;color:var(--ink-400);font-family:var(--font-body);}
+
+  .note{margin-top:22px;padding:16px 18px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-m);border-left:3px solid var(--steel);}
+  .note h3{font-family:var(--font-body);text-transform:none;font-size:13.5px;font-weight:600;color:var(--ink-900);margin-bottom:6px;letter-spacing:0;}
+  .note p{margin:0;color:var(--ink-600);font-size:13.5px;max-width:78ch;}
+  .note p+p{margin-top:8px;}
+
+  @media (prefers-reduced-motion: reduce){.btn,.seg-btn,.swatch{transition:none;} .spinner{animation:none;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div>
+      <div class="kicker">ПрофВизор</div>
+      <h1>ПрофВизор</h1>
+      <p>Загрузите фото участка клиента, укажите профиль и цвет забора — получите фотореалистичную визуализацию, чтобы отправить её клиенту прямо во время разговора.</p>
+    </div>
+    <div class="masthead-meta" id="mastheadMeta">
+      ПРОВАЙДЕР: …<br>ФОТО: НЕ ЗАГРУЖЕНО
+    </div>
+  </header>
+
+  <div class="workbench">
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Предпросмотр</h2>
+        <div class="btn-row">
+          <label class="btn" for="photoInput">Загрузить фото участка</label>
+          <input id="photoInput" type="file" accept="image/jpeg,image/png,image/webp">
+          <button class="btn ghost" id="resetPhotoBtn" type="button">Сбросить</button>
+          <button class="btn primary" id="generateBtn" type="button" disabled>Сгенерировать</button>
+          <button class="btn" id="downloadBtn" type="button" hidden>Скачать картинку</button>
+        </div>
+      </div>
+
+      <div class="stage">
+        <span class="rivet tl"></span><span class="rivet tr"></span>
+        <span class="rivet bl"></span><span class="rivet br"></span>
+        <div class="canvas-box" id="canvasBox">
+          <canvas id="stageCanvas" aria-label="Разметка расположения забора на фото"></canvas>
+          <img id="resultImg" alt="Результат генерации забора на фото участка">
+          <div class="canvas-empty-hint" id="emptyHint"><span>ЗАГРУЗИТЕ ФОТО УЧАСТКА КЛИЕНТА</span></div>
+          <div class="busy-overlay" id="busyOverlay"><div class="spinner"></div><span id="busyText">Генерируем…</span></div>
+        </div>
+      </div>
+
+      <p class="stage-caption">
+        <span id="captionText">—</span>
+        <span>Забор: <strong id="captionRun">—</strong></span>
+      </p>
+      <p class="status-row" id="statusRow"></p>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Параметры</h2></div>
+      <div class="panel-body">
+
+        <div class="field-group">
+          <span class="field-label">Тип профиля</span>
+          <div class="segmented" id="profileButtons"></div>
+        </div>
+
+        <div class="field-group">
+          <span class="field-label">Цвет покрытия</span>
+          <div class="swatches" id="swatchGrid"></div>
+          <div class="ral-name" id="ralName"></div>
+        </div>
+
+        <div class="field-group">
+          <span class="field-label">Высота и расположение на фото</span>
+          <div class="range-row">
+            <label for="heightRange">Высота, м</label>
+            <input type="range" id="heightRange" min="1.2" max="2.5" step="0.1" value="2.0">
+            <output id="heightOut">2.0 м</output>
+          </div>
+          <div class="range-row">
+            <label for="leftRange">Отступ слева</label>
+            <input type="range" id="leftRange" min="2" max="70" step="1" value="10">
+            <output id="leftOut">10 %</output>
+          </div>
+          <div class="range-row">
+            <label for="widthRange">Ширина в кадре</label>
+            <input type="range" id="widthRange" min="15" max="96" step="1" value="76">
+            <output id="widthOut">76 %</output>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+
+  <section class="panel smeta">
+    <div class="panel-head">
+      <div class="smeta-head" style="width:100%">
+        <h2 style="font-size:19px;">Количество материала</h2>
+        <p>Только штуки и метры по введённой длине — без цены, чтобы не привязывать разговор с клиентом к цифрам до замера.</p>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="range-row" style="margin-bottom:16px;max-width:360px;">
+        <label for="lengthRange">Длина забора, м</label>
+        <input type="range" id="lengthRange" min="4" max="120" step="1" value="24" style="flex:1;accent-color:var(--accent);">
+        <output id="lengthOut">24 м</output>
+      </div>
+      <div class="smeta-grid" id="smetaGrid"></div>
+    </div>
+  </section>
+
+  <div class="note">
+    <h3>Как это работает</h3>
+    <p>Разметка (слева) — быстрый конструктор, чтобы указать профиль, цвет и границы забора на фото. Кнопка «Сгенерировать» отправляет фото и параметры на сервер, который перерисовывает изображение через генеративную модель — результат заменяет схематичную разметку на фотореалистичную картинку.</p>
+    <p>Фото и результат нигде не сохраняются дольше самого запроса — сервер обрабатывает их в памяти и не пишет на диск. Цена товара в интерфейсе не показывается и не считается — это осознанное решение.</p>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var PROFILES = [];
+  var RAL = [];
+  var FIELD_LIMITS = null;
+  var PROVIDER_NAME = "";
+
+  var state = {
+    profileIdx: 3,
+    ralIdx: 2,
+    heightM: 2.0,
+    leftPct: 10,
+    widthPct: 76,
+    lengthM: 24,
+    photoFile: null,
+    photoImg: null,
+    resultDataUrl: null
+  };
+
+  try {
+    var saved = JSON.parse(localStorage.getItem('profvizor-state') || 'null');
+    if (saved && typeof saved === 'object') {
+      ['profileIdx','ralIdx','heightM','leftPct','widthPct','lengthM'].forEach(function(k){
+        if (saved[k] !== undefined) state[k] = saved[k];
+      });
+    }
+  } catch(e) {}
+
+  function persist(){
+    try {
+      var toSave = {};
+      ['profileIdx','ralIdx','heightM','leftPct','widthPct','lengthM'].forEach(function(k){ toSave[k]=state[k]; });
+      localStorage.setItem('profvizor-state', JSON.stringify(toSave));
+    } catch(e) {}
+  }
+
+  function shade(hex, pct){
+    var n = parseInt(hex.slice(1),16);
+    var r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+    var f = pct<0?0:255, p=Math.abs(pct);
+    r=Math.round((f-r)*p)+r; g=Math.round((f-g)*p)+g; b=Math.round((f-b)*p)+b;
+    return 'rgb('+r+','+g+','+b+')';
+  }
+
+  var canvas = document.getElementById('stageCanvas');
+  var ctx = canvas.getContext('2d');
+  var resultImg = document.getElementById('resultImg');
+  var emptyHint = document.getElementById('emptyHint');
+  var logicalW=0, logicalH=0;
+
+  function resizeCanvas(){
+    var rect = canvas.getBoundingClientRect();
+    var dpr = Math.max(1, window.devicePixelRatio||1);
+    logicalW = Math.max(1, Math.round(rect.width));
+    logicalH = Math.max(1, Math.round(rect.height));
+    canvas.width = Math.round(logicalW*dpr);
+    canvas.height = Math.round(logicalH*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    render();
+  }
+
+  function coverDraw(img,w,h){
+    var ir = img.naturalWidth/img.naturalHeight, r = w/h, sw,sh,sx,sy;
+    if (ir>r){ sh=img.naturalHeight; sw=sh*r; sx=(img.naturalWidth-sw)/2; sy=0; }
+    else { sw=img.naturalWidth; sh=sw/r; sx=0; sy=(img.naturalHeight-sh)/2; }
+    ctx.drawImage(img, sx,sy,sw,sh, 0,0,w,h);
+  }
+
+  function drawDefaultScene(w,h){
+    var sky = ctx.createLinearGradient(0,0,0,h*0.62);
+    sky.addColorStop(0,'#AFC7D6'); sky.addColorStop(1,'#DCE7E4');
+    ctx.fillStyle=sky; ctx.fillRect(0,0,w,h*0.64);
+    var ground = ctx.createLinearGradient(0,h*0.6,0,h);
+    ground.addColorStop(0,'#8FA772'); ground.addColorStop(1,'#6F8A58');
+    ctx.fillStyle=ground; ctx.fillRect(0,h*0.6,w,h*0.4);
+  }
+
+  function fenceGeometry(w,h){
+    var pxPerMeter = h*0.155, baselineY = h*0.815, heightPx = state.heightM*pxPerMeter;
+    return { x: w*(state.leftPct/100), w: w*(state.widthPct/100), yTop: baselineY-heightPx, h: heightPx, pxPerMeter: pxPerMeter, baselineY: baselineY };
+  }
+
+  function drawPosts(g){
+    var postSpan = g.pxPerMeter*2.5;
+    for (var px=g.x; px<=g.x+g.w+1; px+=postSpan){
+      ctx.fillStyle='rgba(20,24,26,0.30)';
+      ctx.fillRect(px-1.5, g.yTop, 3, g.h);
+    }
+  }
+
+  function drawFence(w,h){
+    var profile = PROFILES[state.profileIdx], color = RAL[state.ralIdx].hex, g = fenceGeometry(w,h);
+    if (!profile || !RAL[state.ralIdx] || g.w<=0 || g.h<=0) return;
+    ctx.save(); ctx.beginPath(); ctx.rect(g.x,g.yTop,g.w,g.h); ctx.clip();
+
+    if (profile.id === 'corrugated') {
+      ctx.fillStyle=color; ctx.fillRect(g.x,g.yTop,g.w,g.h);
+      var pitch = Math.max(3, g.pxPerMeter*0.114);
+      for (var x=g.x; x<g.x+g.w; x+=pitch){
+        var lg = ctx.createLinearGradient(x,0,x+pitch,0);
+        lg.addColorStop(0, shade(color,0.22)); lg.addColorStop(0.45, shade(color,-0.12)); lg.addColorStop(1, shade(color,0.22));
+        ctx.fillStyle=lg; ctx.fillRect(x,g.yTop,pitch*0.92,g.h);
+      }
+      ctx.fillStyle=shade(color,0.32); ctx.fillRect(g.x,g.yTop,g.w,Math.max(2,g.h*0.02));
+      drawPosts(g);
+    } else if (profile.id === 'louvre') {
+      ctx.fillStyle=color; ctx.fillRect(g.x,g.yTop,g.w,g.h);
+      var slatH = Math.max(3, g.pxPerMeter*0.11);
+      for (var y=g.yTop; y<g.yTop+g.h; y+=slatH){
+        var bandH = Math.min(slatH, g.yTop+g.h-y);
+        var bg = ctx.createLinearGradient(0,y,0,y+bandH);
+        bg.addColorStop(0, shade(color,0.30)); bg.addColorStop(0.55, color); bg.addColorStop(1, shade(color,-0.30));
+        ctx.fillStyle=bg; ctx.fillRect(g.x,y,g.w,bandH*0.88);
+      }
+      ctx.fillStyle=shade(color,0.32); ctx.fillRect(g.x,g.yTop,g.w,Math.max(2,g.h*0.02));
+      drawPosts(g);
+    } else {
+      var gap = profile.id === 'picket-gap';
+      var slatW = g.pxPerMeter*0.13, pitch2 = gap ? g.pxPerMeter*0.20 : slatW;
+      for (var sx=g.x; sx<g.x+g.w; sx+=pitch2){
+        if (gap){ ctx.fillStyle='rgba(0,0,0,0.22)'; ctx.fillRect(sx,g.yTop,Math.min(pitch2,g.x+g.w-sx),g.h); }
+        var slg = ctx.createLinearGradient(sx,0,sx+slatW,0);
+        slg.addColorStop(0, shade(color,0.20)); slg.addColorStop(0.55, color); slg.addColorStop(1, shade(color,-0.18));
+        ctx.fillStyle=slg; ctx.fillRect(sx,g.yTop,Math.min(slatW,g.x+g.w-sx),g.h);
+      }
+      ctx.fillStyle=shade(color,0.30); ctx.fillRect(g.x,g.yTop,g.w,Math.max(2,g.h*0.018));
+    }
+    ctx.restore();
+  }
+
+  function render(){
+    if (!logicalW) return;
+    ctx.clearRect(0,0,logicalW,logicalH);
+    if (state.photoImg) coverDraw(state.photoImg, logicalW, logicalH);
+    else drawDefaultScene(logicalW, logicalH);
+    drawFence(logicalW, logicalH);
+    updateCaption();
+  }
+
+  function showCanvasMode(){
+    canvas.style.display = 'block';
+    resultImg.style.display = 'none';
+  }
+  function showResultMode(){
+    canvas.style.display = 'none';
+    resultImg.style.display = 'block';
+  }
+
+  function invalidateResult(){
+    if (state.resultDataUrl){
+      state.resultDataUrl = null;
+      document.getElementById('downloadBtn').hidden = true;
+      showCanvasMode();
+    }
+  }
+
+  function updateCaption(){
+    var profile = PROFILES[state.profileIdx], ral = RAL[state.ralIdx];
+    if (!profile || !ral) return;
+    document.getElementById('captionText').textContent =
+      profile.label + ' · ' + ral.code + ' «' + ral.name + '» · высота ' + state.heightM.toFixed(1) + ' м';
+    var visibleM = Math.round((state.widthPct/100) * state.lengthM);
+    document.getElementById('captionRun').textContent = visibleM + ' из ' + state.lengthM + ' м в кадре';
+  }
+
+  function setStatus(kind, text){
+    var el = document.getElementById('statusRow');
+    el.className = 'status-row' + (kind ? ' '+kind : '');
+    el.textContent = text || '';
+  }
+
+  function setMasthead(){
+    var photoStatus = state.photoFile ? 'ЗАГРУЖЕНО' : 'НЕ ЗАГРУЖЕНО';
+    document.getElementById('mastheadMeta').innerHTML =
+      'ПРОВАЙДЕР: ' + (PROVIDER_NAME || '…') + '<br>ФОТО: ' + photoStatus;
+  }
+
+  // ---- загрузка конфига с бэкенда (раздел 8 ТЗ — единый источник данных) ----
+  function buildProfileButtons(){
+    var wrap = document.getElementById('profileButtons');
+    wrap.innerHTML = '';
+    PROFILES.forEach(function(p, i){
+      var btn = document.createElement('button');
+      btn.type='button'; btn.className='seg-btn';
+      btn.setAttribute('aria-pressed', i===state.profileIdx ? 'true':'false');
+      btn.innerHTML = '<span>'+p.label+'</span>';
+      btn.addEventListener('click', function(){
+        state.profileIdx = i;
+        Array.prototype.forEach.call(wrap.children, function(c,ci){ c.setAttribute('aria-pressed', ci===i?'true':'false'); });
+        renderSmeta(); invalidateResult(); render(); persist();
+      });
+      wrap.appendChild(btn);
+    });
+  }
+
+  function buildSwatches(){
+    var wrap = document.getElementById('swatchGrid');
+    wrap.innerHTML = '';
+    RAL.forEach(function(r,i){
+      var b = document.createElement('button');
+      b.type='button'; b.className='swatch';
+      b.setAttribute('aria-pressed', i===state.ralIdx ? 'true':'false');
+      b.title = r.code+' — '+r.name;
+      b.innerHTML = '<span class="chip" style="background:'+r.hex+'"></span><span class="ral-code">'+r.code.replace('RAL ','')+'</span>';
+      b.addEventListener('click', function(){
+        state.ralIdx = i;
+        Array.prototype.forEach.call(wrap.children, function(c,ci){ c.setAttribute('aria-pressed', ci===i?'true':'false'); });
+        document.getElementById('ralName').textContent = r.code+' · '+r.name;
+        invalidateResult(); render(); persist();
+      });
+      wrap.appendChild(b);
+    });
+    document.getElementById('ralName').textContent = RAL[state.ralIdx].code+' · '+RAL[state.ralIdx].name;
+  }
+
+  function bindRange(id, outId, fmt, key, cb){
+    var el = document.getElementById(id), out = document.getElementById(outId);
+    el.value = state[key]; out.textContent = fmt(state[key]);
+    el.addEventListener('input', function(){
+      state[key] = parseFloat(el.value);
+      out.textContent = fmt(state[key]);
+      if (cb) cb();
+      invalidateResult(); render(); persist();
+    });
+  }
+
+  function applyFieldLimits(){
+    if (!FIELD_LIMITS) return;
+    var h = FIELD_LIMITS.heightM, l = FIELD_LIMITS.leftPct, w = FIELD_LIMITS.widthPct;
+    var heightEl = document.getElementById('heightRange');
+    heightEl.min = h.min; heightEl.max = h.max; heightEl.step = h.step;
+    var leftEl = document.getElementById('leftRange');
+    leftEl.min = l.min; leftEl.max = l.max;
+    var widthEl = document.getElementById('widthRange');
+    widthEl.min = w.min; widthEl.max = w.max;
+  }
+
+  async function loadConfig(){
+    try {
+      var resp = await fetch('/api/config');
+      if (!resp.ok) throw new Error('config ' + resp.status);
+      var cfg = await resp.json();
+      PROFILES = cfg.profiles; RAL = cfg.ralPalette; FIELD_LIMITS = cfg.limits; PROVIDER_NAME = cfg.provider;
+      applyFieldLimits();
+      buildProfileButtons(); buildSwatches();
+      bindRange('heightRange','heightOut', function(v){return v.toFixed(1)+' м';}, 'heightM');
+      bindRange('leftRange','leftOut', function(v){return Math.round(v)+' %';}, 'leftPct');
+      bindRange('widthRange','widthOut', function(v){return Math.round(v)+' %';}, 'widthPct');
+      bindRange('lengthRange','lengthOut', function(v){return Math.round(v)+' м';}, 'lengthM', function(){ renderSmeta(); });
+      setMasthead();
+      renderSmeta();
+      resizeCanvas();
+    } catch (e) {
+      setStatus('error', 'Не удалось загрузить конфигурацию с сервера. Обновите страницу.');
+    }
+  }
+
+  // ---- фото ----
+  var photoInput = document.getElementById('photoInput');
+  photoInput.addEventListener('change', function(e){
+    var file = e.target.files && e.target.files[0];
+    if (!file) return;
+    state.photoFile = file;
+    var reader = new FileReader();
+    reader.onload = function(ev){
+      var img = new Image();
+      img.onload = function(){
+        state.photoImg = img;
+        emptyHint.style.display = 'none';
+        document.getElementById('generateBtn').disabled = false;
+        setMasthead();
+        invalidateResult();
+        render();
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById('resetPhotoBtn').addEventListener('click', function(){
+    state.photoFile = null; state.photoImg = null;
+    photoInput.value = '';
+    emptyHint.style.display = 'flex';
+    document.getElementById('generateBtn').disabled = true;
+    setMasthead();
+    invalidateResult();
+    setStatus('', '');
+    render();
+  });
+
+  // ---- смета ----
+  var smetaGrid = document.getElementById('smetaGrid');
+  function renderSmeta(){
+    var profile = PROFILES[state.profileIdx];
+    if (!profile) return;
+    var length = state.lengthM, height = state.heightM, area = length*height;
+    var posts = Math.ceil(length/2.5) + 1;
+    var rows = [];
+    rows.push({label:'Длина', value: length.toFixed(0), unit:'м'});
+    rows.push({label:'Высота', value: height.toFixed(1), unit:'м'});
+    rows.push({label:'Площадь', value: area.toFixed(1), unit:'м²'});
+    if (profile.id === 'corrugated') rows.push({label:'Листов (1,15 м)', value: Math.ceil(length/1.15), unit:'шт'});
+    else if (profile.id === 'louvre') rows.push({label:'Ламелей по высоте', value: Math.ceil(height/0.11), unit:'шт'});
+    else { var pitch = profile.id==='picket-gap' ? 0.20 : 0.13; rows.push({label:'Штакетин', value: Math.ceil(length/pitch), unit:'шт'}); }
+    rows.push({label:'Столбов', value: posts, unit:'шт'});
+    smetaGrid.innerHTML = rows.map(function(r){
+      return '<div class="smeta-cell"><span class="label">'+r.label+'</span><span class="value">'+r.value+' <small>'+r.unit+'</small></span></div>';
+    }).join('');
+    updateCaption();
+  }
+
+  // ---- генерация ----
+  var generateBtn = document.getElementById('generateBtn');
+  var downloadBtn = document.getElementById('downloadBtn');
+  var busyOverlay = document.getElementById('busyOverlay');
+  var busyText = document.getElementById('busyText');
+
+  var ERROR_FALLBACK = 'Не удалось получить понятную причину ошибки от сервера.';
+
+  generateBtn.addEventListener('click', async function(){
+    if (!state.photoFile) return;
+    generateBtn.disabled = true;
+    busyOverlay.style.display = 'flex';
+    busyText.textContent = 'Генерируем… обычно 5–20 секунд';
+    setStatus('info', 'Отправляем фото и параметры провайдеру генерации…');
+
+    var form = new FormData();
+    form.append('photo', state.photoFile);
+    form.append('profileType', PROFILES[state.profileIdx].id);
+    form.append('ralCode', RAL[state.ralIdx].code);
+    form.append('heightM', state.heightM);
+    form.append('leftPct', state.leftPct);
+    form.append('widthPct', state.widthPct);
+
+    try {
+      var resp = await fetch('/api/visualize', { method: 'POST', body: form });
+      var data = await resp.json().catch(function(){ return null; });
+
+      if (!resp.ok) {
+        var msg = (data && data.error && data.error.message) || ERROR_FALLBACK;
+        setStatus('error', msg);
+        return;
+      }
+
+      state.resultDataUrl = 'data:image/jpeg;base64,' + data.imageBase64;
+      resultImg.src = state.resultDataUrl;
+      showResultMode();
+      downloadBtn.hidden = false;
+      setStatus('success', 'Готово за ' + (data.generationMs/1000).toFixed(1) + ' с · провайдер: ' + data.provider);
+    } catch (e) {
+      setStatus('error', 'Не удалось связаться с сервером. Проверьте соединение и попробуйте ещё раз.');
+    } finally {
+      generateBtn.disabled = false;
+      busyOverlay.style.display = 'none';
+    }
+  });
+
+  downloadBtn.addEventListener('click', function(){
+    if (!state.resultDataUrl) return;
+    var profile = PROFILES[state.profileIdx], ral = RAL[state.ralIdx];
+    var a = document.createElement('a');
+    a.href = state.resultDataUrl;
+    a.download = 'zabor-' + profile.id + '-' + ral.code.replace('RAL ','').trim() + '.jpg';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  });
+
+  // ---- boot ----
+  window.addEventListener('resize', resizeCanvas);
+  if (window.ResizeObserver) new ResizeObserver(resizeCanvas).observe(document.getElementById('canvasBox'));
+  loadConfig();
+})();
+</script>
+</body>
+</html>
